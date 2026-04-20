@@ -12,7 +12,7 @@ class Haptics {
 }
 
 struct ChatView: View {
-    @StateObject var groq: GroqService
+    @ObservedObject var groq: GroqService
     @State private var inputText = ""
     @AppStorage("selectedModel") private var selectedModel = "llama-3.1-8b-instant"
     @AppStorage("apiKey") private var apiKey = ""
@@ -178,6 +178,7 @@ struct MessageBubble: View {
                     .stroke(.white.opacity(0.15), lineWidth: 1)
                     .opacity(role == "user" ? 0 : 1)
             )
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             
             if role == "assistant" { Spacer(minLength: 60) }
         }
@@ -189,22 +190,27 @@ struct MarkdownContentView: View {
     let content: String
     let role: String
     
+    private var segments: [Segment] {
+        parseMarkdown(content)
+    }
+    
     var body: some View {
-        let segments = parseMarkdown(content)
         VStack(alignment: .leading, spacing: 12) {
-            ForEach(segments.indices, id: \.self) { i in
-                if segments[i].isCode {
-                    CodeBlock(code: segments[i].text)
+            ForEach(segments) { segment in
+                if segment.isCode {
+                    CodeBlock(code: segment.text)
                 } else {
-                    Text(.init(segments[i].text)) // SwiftUI Markdown for text
+                    Text(.init(segment.text)) // SwiftUI Markdown for text
                         .font(.body)
+                        .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
     }
     
-    struct Segment {
+    struct Segment: Identifiable {
+        let id = UUID()
         let text: String
         let isCode: Bool
     }
@@ -214,7 +220,7 @@ struct MarkdownContentView: View {
         let parts = input.components(separatedBy: "```")
         for (index, part) in parts.enumerated() {
             let isCode = index % 2 != 0
-            if !part.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            if !part.isEmpty {
                 segments.append(Segment(text: part, isCode: isCode))
             }
         }
