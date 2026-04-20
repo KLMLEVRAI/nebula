@@ -89,7 +89,7 @@ class GroqService: ObservableObject {
     
     private func saveHistory() {
         if let encoded = try? JSONEncoder().encode(history) {
-            UserDefaults.standard.set(encoded, connect: historyKey)
+            UserDefaults.standard.set(encoded, forKey: historyKey)
         }
     }
     

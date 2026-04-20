@@ -21,9 +21,14 @@ struct ContentView: View {
                         }
                     }
                     .sheet(isPresented: $showHistory) {
-                        HistoryView(groq: groq)
-                            .presentationDetents([.medium, .large])
-                            .presentationBackground(.ultraThinMaterial)
+                        if #available(iOS 16.4, *) {
+                            HistoryView(groq: groq)
+                                .presentationDetents([.medium, .large])
+                                .presentationBackground(.ultraThinMaterial)
+                        } else {
+                            HistoryView(groq: groq)
+                                .presentationDetents([.medium, .large])
+                        }
                     }
             }
             .accentColor(.white)
