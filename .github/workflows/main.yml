@@ -1,0 +1,45 @@
+name: Native iOS Build (Unsigned IPA)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Native iOS App
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build Xcode Archive (No Signing)
+        run: |
+          xcodebuild clean archive \
+            -project Nebula.xcodeproj \
+            -scheme Nebula \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath Nebula.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Extract and Generate .ipa
+        run: |
+          mkdir -p Payload
+          mv Nebula.xcarchive/Products/Applications/Nebula.app Payload/
+          zip -qr Nebula-Native-Unsigned.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nebula-Native-Unsigned
+          path: Nebula-Native-Unsigned.ipa
+          retention-days: 7
